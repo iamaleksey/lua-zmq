@@ -13,4 +13,5 @@ $ make install
 API
 ===
 
-See http://github.com/iamaleksey/lua-zmq/blob/master/API.md and http://www.zeromq.org/area:docs-v20.
+See [API.md](http://github.com/iamaleksey/lua-zmq/blob/master/API.md) and
+[ØMQ docs](http://www.zeromq.org/area:docs-v20).
