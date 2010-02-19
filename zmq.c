@@ -30,7 +30,8 @@
 #include <string.h>
 #include <stdint.h>
 
-static int Lzmq_init(lua_State *L) {
+static int Lzmq_init(lua_State *L)
+{
     int app_threads = luaL_checkint(L, 1);
     int io_threads = luaL_checkint(L, 2);
     int flags = luaL_optint(L, 3, 0);
@@ -43,7 +44,8 @@ static int Lzmq_init(lua_State *L) {
     return 1;
 }
 
-static int Lzmq_term(lua_State *L) {
+static int Lzmq_term(lua_State *L)
+{
     luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
     void *ctx = lua_touserdata(L, 1);
 
@@ -51,7 +53,8 @@ static int Lzmq_term(lua_State *L) {
     return 0;
 }
 
-static int Lzmq_socket(lua_State *L) {
+static int Lzmq_socket(lua_State *L)
+{
     luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
     void *ctx = lua_touserdata(L, 1);
     int type = luaL_checkint(L, 2);
@@ -64,14 +67,16 @@ static int Lzmq_socket(lua_State *L) {
     return 1;
 }
 
-static int Lzmq_close(lua_State *L) {
+static int Lzmq_close(lua_State *L)
+{
     luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
     void *s = lua_touserdata(L, 1);
     assert(zmq_close(s) == 0);
     return 0;
 }
 
-static int Lzmq_setsockopt(lua_State *L) {
+static int Lzmq_setsockopt(lua_State *L)
+{
     luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
     void *s = lua_touserdata(L, 1);
     int option = luaL_checkint(L, 2);
@@ -118,7 +123,8 @@ static int Lzmq_setsockopt(lua_State *L) {
     return 0;
 }
 
-static int Lzmq_bind(lua_State *L) {
+static int Lzmq_bind(lua_State *L)
+{
     luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
     void *s = lua_touserdata(L, 1);
     const char *addr = luaL_checkstring(L, 2);
@@ -129,7 +135,8 @@ static int Lzmq_bind(lua_State *L) {
     return 0;
 }
 
-static int Lzmq_connect(lua_State *L) {
+static int Lzmq_connect(lua_State *L)
+{
     luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
     void *s = lua_touserdata(L, 1);
     const char *addr = luaL_checkstring(L, 2);
@@ -140,7 +147,8 @@ static int Lzmq_connect(lua_State *L) {
     return 0;
 }
 
-static int Lzmq_send(lua_State *L) {
+static int Lzmq_send(lua_State *L)
+{
     luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
     void *s = lua_touserdata(L, 1);
     size_t msg_size;
@@ -168,7 +176,8 @@ static int Lzmq_send(lua_State *L) {
     return 1;
 }
 
-static int Lzmq_flush(lua_State *L) {
+static int Lzmq_flush(lua_State *L)
+{
     luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
     void *s = lua_touserdata(L, 1);
 
@@ -178,7 +187,8 @@ static int Lzmq_flush(lua_State *L) {
     return 0;
 }
 
-static int Lzmq_recv(lua_State *L) {
+static int Lzmq_recv(lua_State *L)
+{
     luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
     void *s = lua_touserdata(L, 1);
     int flags = luaL_optint(L, 2, 0);
@@ -218,7 +228,8 @@ static const luaL_reg zmqlib[] = {
     {NULL,         NULL}
 };
 
-LUALIB_API int luaopen_zmq(lua_State *L) {
+LUALIB_API int luaopen_zmq(lua_State *L)
+{
     luaL_register(L, "zmq", zmqlib);
     // flags.
     lua_pushnumber(L, ZMQ_POLL);
