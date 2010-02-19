@@ -1,10 +1,34 @@
+/*
+ * Copyright (c) 2010 Aleksey Yeschenko <aleksey@yeschenko.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 #define LUA_LIB
+
 #include "lua.h"
 #include "lauxlib.h"
+
+#include <zmq.h>
 #include <assert.h>
 #include <string.h>
 #include <stdint.h>
-#include <zmq.h>
 
 static int Lzmq_init(lua_State *L) {
     int app_threads = luaL_checkint(L, 1);
@@ -12,7 +36,7 @@ static int Lzmq_init(lua_State *L) {
     int flags = luaL_optint(L, 3, 0);
 
     void *ctx = zmq_init(app_threads, io_threads, flags);
-    if(!ctx) {
+    if (!ctx) {
         return luaL_error(L, zmq_strerror(errno));
     }
     lua_pushlightuserdata(L, ctx);
@@ -33,7 +57,7 @@ static int Lzmq_socket(lua_State *L) {
     int type = luaL_checkint(L, 2);
 
     void *s = zmq_socket(ctx, type);
-    if(!s) {
+    if (!s) {
         return luaL_error(L, zmq_strerror(errno));
     }
     lua_pushlightuserdata(L, s);
@@ -54,7 +78,7 @@ static int Lzmq_setsockopt(lua_State *L) {
 
     int rc = 0;
 
-    switch(option) {
+    switch (option) {
     case ZMQ_HWM:
     case ZMQ_LWM:
     case ZMQ_SWAP:
@@ -88,7 +112,7 @@ static int Lzmq_setsockopt(lua_State *L) {
         errno = EINVAL;
     }
 
-    if(rc != 0) {
+    if (rc != 0) {
         return luaL_error(L, zmq_strerror(errno));
     }
     return 0;
@@ -99,7 +123,7 @@ static int Lzmq_bind(lua_State *L) {
     void *s = lua_touserdata(L, 1);
     const char *addr = luaL_checkstring(L, 2);
 
-    if(zmq_bind(s, addr) != 0) {
+    if (zmq_bind(s, addr) != 0) {
         return luaL_error(L, zmq_strerror(errno));
     }
     return 0;
@@ -110,7 +134,7 @@ static int Lzmq_connect(lua_State *L) {
     void *s = lua_touserdata(L, 1);
     const char *addr = luaL_checkstring(L, 2);
 
-    if(zmq_connect(s, addr) != 0) {
+    if (zmq_connect(s, addr) != 0) {
         return luaL_error(L, zmq_strerror(errno));
     }
     return 0;
@@ -136,7 +160,7 @@ static int Lzmq_send(lua_State *L) {
         return 1;
     }
 
-    if(rc != 0) {
+    if (rc != 0) {
         return luaL_error(L, zmq_strerror(errno));
     }
 
@@ -148,7 +172,7 @@ static int Lzmq_flush(lua_State *L) {
     luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
     void *s = lua_touserdata(L, 1);
 
-    if(zmq_flush(s) != 0) {
+    if (zmq_flush(s) != 0) {
         return luaL_error(L, zmq_strerror(errno));
     }
     return 0;
@@ -164,13 +188,13 @@ static int Lzmq_recv(lua_State *L) {
 
     int rc = zmq_recv(s, &msg, flags);
 
-    if(rc != 0 && errno == EAGAIN) {
+    if (rc != 0 && errno == EAGAIN) {
         assert(zmq_msg_close(&msg) == 0);
         lua_pushnil(L);
         return 1;
     }
 
-    if(rc != 0) {
+    if (rc != 0) {
         assert(zmq_msg_close(&msg) == 0);
         return luaL_error(L, zmq_strerror(errno));
     }
