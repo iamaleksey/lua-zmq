@@ -20,24 +20,25 @@
 
 require("zmq")
 
-if not arg[2] then
-    print("usage: lua local_lat.lua <bind-to> <roundtrip-count>")
+if not arg[3] then
+    print("usage: lua local_lat.lua <bind-to> <message-size> <roundtrip-count>")
     os.exit()
 end
 
 local bind_to = arg[1]
-local roundtrip_count = tonumber(arg[2])
+local message_size = tonumber(arg[2])
+local roundtrip_count = tonumber(arg[3])
 
 local ctx = zmq.init(1, 1)
-local s = zmq.socket(ctx, zmq.REP)
-zmq.bind(s, bind_to)
+local s = ctx:socket(zmq.REP)
+s:bind(bind_to)
 
 local msg
 
 for i = 1, roundtrip_count do
-    msg = zmq.recv(s)
-    zmq.send(s, msg)
+    msg = s:recv()
+    s:send(msg)
 end
 
-zmq.close(s)
-zmq.term(ctx)
+s:close()
+ctx:term()

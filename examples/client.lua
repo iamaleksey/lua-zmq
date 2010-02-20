@@ -21,9 +21,12 @@
 require("zmq")
 
 local ctx = zmq.init(1, 1)
-local s = zmq.socket(ctx, zmq.REQ)
-zmq.connect(s, "tcp://localhost:5555")
-zmq.send(s, "SELECT * FROM mytable")
-print(zmq.recv(s))
-zmq.close(s)
-zmq.term(ctx)
+local s = ctx:socket(zmq.REQ)
+
+s:connect("tcp://localhost:5555")
+
+s:send("SELECT * FROM mytable")
+print(s:recv())
+
+s:close()
+ctx:term()

@@ -30,22 +30,22 @@ local message_size = tonumber(arg[2])
 local message_count = tonumber(arg[3])
 
 local ctx = zmq.init(1, 1)
-local s = zmq.socket(ctx, zmq.SUB)
-zmq.setsockopt(s, zmq.SUBSCRIBE, "");
-zmq.bind(s, bind_to)
+local s = ctx:socket(zmq.SUB)
+s:setsockopt(zmq.SUBSCRIBE, "");
+s:bind(bind_to)
 
-local msg = zmq.recv(s)
+local msg = s:recv()
 
 local start_time = os.time()
 
 for i = 1, message_count - 1 do
-    msg = zmq.recv(s)
+    msg = s:recv()
 end
 
 local end_time = os.time()
 
-zmq.close(s)
-zmq.term(ctx)
+s:close()
+ctx:term()
 
 local elapsed = os.difftime(end_time, start_time)
 if elapsed == 0 then elapsed = 1 end

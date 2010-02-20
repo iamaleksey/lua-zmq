@@ -30,8 +30,8 @@ local message_size = tonumber(arg[2])
 local roundtrip_count = tonumber(arg[3])
 
 local ctx = zmq.init(1, 1)
-local s = zmq.socket(ctx, zmq.REQ)
-zmq.connect(s, connect_to)
+local s = ctx:socket(zmq.REQ)
+s:connect(connect_to)
 
 local msg = ""
 for i = 1, message_size do msg = msg .. "0" end
@@ -39,14 +39,14 @@ for i = 1, message_size do msg = msg .. "0" end
 local start_time = os.time()
 
 for i = 1, roundtrip_count do
-    zmq.send(s, msg)
-    msg = zmq.recv(s)
+    s:send(msg)
+    msg = s:recv()
 end
 
 local end_time = os.time()
 
-zmq.close(s)
-zmq.term(ctx)
+s:close()
+ctx:term()
 
 local elapsed = os.difftime(end_time, start_time)
 local latency = elapsed * 1000000 / roundtrip_count / 2

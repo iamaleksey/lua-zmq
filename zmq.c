@@ -30,55 +30,67 @@
 #include <string.h>
 #include <stdint.h>
 
+#define MT_ZMQ_CONTEXT "MT_ZMQ_CONTEXT"
+#define MT_ZMQ_SOCKET  "MT_ZMQ_SOCKET"
+
+typedef struct { void *ptr; } zmq_ptr;
+
 static int Lzmq_init(lua_State *L)
 {
     int app_threads = luaL_checkint(L, 1);
     int io_threads = luaL_checkint(L, 2);
     int flags = luaL_optint(L, 3, 0);
 
-    void *ctx = zmq_init(app_threads, io_threads, flags);
-    if (!ctx) {
+    zmq_ptr *ctx = lua_newuserdata(L, sizeof(zmq_ptr));
+
+    ctx->ptr = zmq_init(app_threads, io_threads, flags);
+
+    if (!ctx->ptr) {
         return luaL_error(L, zmq_strerror(errno));
     }
-    lua_pushlightuserdata(L, ctx);
+
+    luaL_getmetatable(L, MT_ZMQ_CONTEXT);
+    lua_setmetatable(L, -2);
+
     return 1;
 }
 
 static int Lzmq_term(lua_State *L)
 {
-    luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-    void *ctx = lua_touserdata(L, 1);
-
-    assert(zmq_term(ctx) == 0);
+    zmq_ptr *ctx = luaL_checkudata(L, 1, MT_ZMQ_CONTEXT);
+    assert(zmq_term(ctx->ptr) == 0);
     return 0;
 }
 
 static int Lzmq_socket(lua_State *L)
 {
-    luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-    void *ctx = lua_touserdata(L, 1);
+    zmq_ptr *ctx = luaL_checkudata(L, 1, MT_ZMQ_CONTEXT);
     int type = luaL_checkint(L, 2);
 
-    void *s = zmq_socket(ctx, type);
-    if (!s) {
+    zmq_ptr *s = lua_newuserdata(L, sizeof(zmq_ptr));
+
+    s->ptr = zmq_socket(ctx->ptr, type);
+
+    if (!s->ptr) {
         return luaL_error(L, zmq_strerror(errno));
     }
-    lua_pushlightuserdata(L, s);
+
+    luaL_getmetatable(L, MT_ZMQ_SOCKET);
+    lua_setmetatable(L, -2);
+
     return 1;
 }
 
 static int Lzmq_close(lua_State *L)
 {
-    luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-    void *s = lua_touserdata(L, 1);
-    assert(zmq_close(s) == 0);
+    zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
+    assert(zmq_close(s->ptr) == 0);
     return 0;
 }
 
 static int Lzmq_setsockopt(lua_State *L)
 {
-    luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-    void *s = lua_touserdata(L, 1);
+    zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
     int option = luaL_checkint(L, 2);
 
     int rc = 0;
@@ -90,7 +102,7 @@ static int Lzmq_setsockopt(lua_State *L)
     case ZMQ_AFFINITY:
         {
             int64_t optval = (int64_t) luaL_checklong(L, 3);
-            rc = zmq_setsockopt(s, option, (void *) &optval, sizeof(int64_t));
+            rc = zmq_setsockopt(s->ptr, option, (void *) &optval, sizeof(int64_t));
         }
         break;
     case ZMQ_IDENTITY:
@@ -99,7 +111,7 @@ static int Lzmq_setsockopt(lua_State *L)
         {
             size_t optvallen;
             const char *optval = luaL_checklstring(L, 3, &optvallen);
-            rc = zmq_setsockopt(s, option, (void *) optval, optvallen);
+            rc = zmq_setsockopt(s->ptr, option, (void *) optval, optvallen);
         }
         break;
     case ZMQ_RATE:
@@ -109,7 +121,7 @@ static int Lzmq_setsockopt(lua_State *L)
     case ZMQ_RCVBUF:
         {
             uint64_t optval = (uint64_t) luaL_checklong(L, 3);
-            rc = zmq_setsockopt(s, option, (void *) &optval, sizeof(uint64_t));
+            rc = zmq_setsockopt(s->ptr, option, (void *) &optval, sizeof(uint64_t));
         }
         break;
     default:
@@ -125,32 +137,31 @@ static int Lzmq_setsockopt(lua_State *L)
 
 static int Lzmq_bind(lua_State *L)
 {
-    luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-    void *s = lua_touserdata(L, 1);
+    zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
     const char *addr = luaL_checkstring(L, 2);
 
-    if (zmq_bind(s, addr) != 0) {
+    if (zmq_bind(s->ptr, addr) != 0) {
         return luaL_error(L, zmq_strerror(errno));
     }
+
     return 0;
 }
 
 static int Lzmq_connect(lua_State *L)
 {
-    luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-    void *s = lua_touserdata(L, 1);
+    zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
     const char *addr = luaL_checkstring(L, 2);
 
-    if (zmq_connect(s, addr) != 0) {
+    if (zmq_connect(s->ptr, addr) != 0) {
         return luaL_error(L, zmq_strerror(errno));
     }
+
     return 0;
 }
 
 static int Lzmq_send(lua_State *L)
 {
-    luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-    void *s = lua_touserdata(L, 1);
+    zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
     size_t msg_size;
     const char *data = luaL_checklstring(L, 2, &msg_size);
     int flags = luaL_optint(L, 3, 0);
@@ -159,7 +170,7 @@ static int Lzmq_send(lua_State *L)
     assert(zmq_msg_init_size(&msg, msg_size) == 0);
     memcpy(zmq_msg_data(&msg), data, msg_size);
 
-    int rc = zmq_send(s, &msg, flags);
+    int rc = zmq_send(s->ptr, &msg, flags);
 
     assert(zmq_msg_close(&msg) == 0);
 
@@ -173,15 +184,14 @@ static int Lzmq_send(lua_State *L)
     }
 
     lua_pushboolean(L, 1);
+
     return 1;
 }
 
 static int Lzmq_flush(lua_State *L)
 {
-    luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-    void *s = lua_touserdata(L, 1);
-
-    if (zmq_flush(s) != 0) {
+    zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
+    if (zmq_flush(s->ptr) != 0) {
         return luaL_error(L, zmq_strerror(errno));
     }
     return 0;
@@ -189,14 +199,13 @@ static int Lzmq_flush(lua_State *L)
 
 static int Lzmq_recv(lua_State *L)
 {
-    luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
-    void *s = lua_touserdata(L, 1);
+    zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
     int flags = luaL_optint(L, 2, 0);
 
     zmq_msg_t msg;
     assert(zmq_msg_init(&msg) == 0);
 
-    int rc = zmq_recv(s, &msg, flags);
+    int rc = zmq_recv(s->ptr, &msg, flags);
 
     if (rc != 0 && errno == EAGAIN) {
         assert(zmq_msg_close(&msg) == 0);
@@ -210,14 +219,24 @@ static int Lzmq_recv(lua_State *L)
     }
 
     lua_pushlstring(L, zmq_msg_data(&msg), zmq_msg_size(&msg));
+
     assert(zmq_msg_close(&msg) == 0);
+
     return 1;
 }
 
 static const luaL_reg zmqlib[] = {
     {"init",       Lzmq_init},
+    {NULL,         NULL}
+};
+
+static const luaL_reg ctxmethods[] = {
     {"term",       Lzmq_term}, 
     {"socket",     Lzmq_socket},
+    {NULL,         NULL}
+};
+
+static const luaL_reg sockmethods[] = {
     {"close",      Lzmq_close},
     {"setsockopt", Lzmq_setsockopt},
     {"bind",       Lzmq_bind},
@@ -231,6 +250,21 @@ static const luaL_reg zmqlib[] = {
 LUALIB_API int luaopen_zmq(lua_State *L)
 {
     luaL_register(L, "zmq", zmqlib);
+
+    // context metatable.
+    luaL_newmetatable(L, MT_ZMQ_CONTEXT);
+    lua_createtable(L, 0, sizeof(ctxmethods) / sizeof(luaL_reg) - 1);
+    luaL_register(L, NULL, ctxmethods);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1);
+
+    // socket metatable.
+    luaL_newmetatable(L, MT_ZMQ_SOCKET);
+    lua_createtable(L, 0, sizeof(sockmethods) / sizeof(luaL_reg) - 1);
+    luaL_register(L, NULL, sockmethods);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1);
+
     // flags.
     lua_pushnumber(L, ZMQ_POLL);
     lua_setfield(L, -2, "POLL");
@@ -238,6 +272,7 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     lua_setfield(L, -2, "NOBLOCK");
     lua_pushnumber(L, ZMQ_NOFLUSH);
     lua_setfield(L, -2, "NOFLUSH");
+
     // zmq.socket types.
     lua_pushnumber(L, ZMQ_P2P);
     lua_setfield(L, -2, "P2P");
@@ -257,6 +292,7 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     lua_setfield(L, -2, "UPSTREAM");
     lua_pushnumber(L, ZMQ_DOWNSTREAM);
     lua_setfield(L, -2, "DOWNSTREAM");
+
     // zmq.setsockopt options.
     lua_pushnumber(L, ZMQ_HWM);
     lua_setfield(L, -2, "HWM");
@@ -282,5 +318,6 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     lua_setfield(L, -2, "SNDBUF");
     lua_pushnumber(L, ZMQ_RCVBUF);
     lua_setfield(L, -2, "RCVBUF");
+
     return 1;
 }

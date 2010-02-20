@@ -1,8 +1,8 @@
 ## constants
 
-ZMQ_CONSTANT_NAME in the C API corresponds to zmq.CONSTANT_NAME in Lua.
+ZMQ_CONSTANT_NAME in the C API turns into zmq.CONSTANT_NAME in Lua.
 
-## zmq.init
+## init
 
 Initialises ØMQ context.
 See [zmq_init(3)](http://api.zeromq.org/zmq_init.3.html).
@@ -10,67 +10,67 @@ See [zmq_init(3)](http://api.zeromq.org/zmq_init.3.html).
 zmq.init(app_threads, io_threads)  
 zmq.init(app_threads, io_threads, flags)
 
-## zmq.term
+## term
 
 Terminates ØMQ context.
 See [zmq_term(3)](http://api.zeromq.org/zmq_term.3.html).
 
-zmq.term(context)
+ctx:term()
 
-## zmq.socket
+## socket
 
 Creates ØMQ socket.
 See [zmq_socket(3)](http://api.zeromq.org/zmq_socket.3.html).
 
-zmq.socket(context, type)
+ctx:socket(type)
 
-## zmq.close
+## close
 
 Destroys ØMQ socket.
 See [zmq_close(3)](http://api.zeromq.org/zmq_close.3.html).
 
-zmq.close(socket)
+s:close()
 
-## zmq.setsockopt
+## setsockopt
 
 Sets a specified option on a ØMQ socket.
 See [zmq_setsockopt(3)](http://api.zeromq.org/zmq_setsockopt.3.html).
 
-zmq.setsockopt(socket, option, optval)
+s:setsockopt(option, optval)
 
-## zmq.bind
+## bind
 
 Binds the socket to the specified address.
 See [zmq_bind(3)](http://api.zeromq.org/zmq_bind.3.html).
 
-zmq.bind(socket, addr)
+s:bind(addr)
 
-## zmq.connect
+## connect
 
 Connect the socket to the specified address.
 See [zmq_connect(3)](http://api.zeromq.org/zmq_connect.3.html).
 
-zmq.connect(socket, addr)
+s:connect(addr)
 
-## zmq.send
+## send
 
 Sends a message.
 See [zmq_send(3)](http://api.zeromq.org/zmq_send.3.html).
 
-zmq.send(socket, msg)  
-zmq.send(socket, msg, flags)
+s:send(msg)  
+s:send(msg, flags)
 
-## zmq.flush
+## flush
 
 Flushes unflushed messages to the socket.
 See [zmq_flush(3)](http://api.zeromq.org/zmq_flush.3.html).
 
-zmq.flush(socket)
+s:flush()
 
-## zmq.recv
+## recv
 
 Retrieves a message from the socket.
 See [zmq_recv(3)](http://api.zeromq.org/zmq_recv.3.html).
 
-zmq.recv(socket)  
-zmq.recv(socket, flags)
+s:recv()  
+s:recv(flags)
