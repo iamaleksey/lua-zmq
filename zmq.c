@@ -249,8 +249,6 @@ static const luaL_reg sockmethods[] = {
 
 LUALIB_API int luaopen_zmq(lua_State *L)
 {
-    luaL_register(L, "zmq", zmqlib);
-
     // context metatable.
     luaL_newmetatable(L, MT_ZMQ_CONTEXT);
     lua_createtable(L, 0, sizeof(ctxmethods) / sizeof(luaL_reg) - 1);
@@ -264,6 +262,8 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     luaL_register(L, NULL, sockmethods);
     lua_setfield(L, -2, "__index");
     lua_pop(L, 1);
+
+    luaL_register(L, "zmq", zmqlib);
 
     // flags.
     lua_pushnumber(L, ZMQ_POLL);
