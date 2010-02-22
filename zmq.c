@@ -256,14 +256,12 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     lua_createtable(L, 0, sizeof(ctxmethods) / sizeof(luaL_reg) - 1);
     luaL_register(L, NULL, ctxmethods);
     lua_setfield(L, -2, "__index");
-    lua_pop(L, 1);
 
     // socket metatable.
     luaL_newmetatable(L, MT_ZMQ_SOCKET);
     lua_createtable(L, 0, sizeof(sockmethods) / sizeof(luaL_reg) - 1);
     luaL_register(L, NULL, sockmethods);
     lua_setfield(L, -2, "__index");
-    lua_pop(L, 1);
 
     luaL_register(L, "zmq", zmqlib);
 
