@@ -247,6 +247,8 @@ static const luaL_reg sockmethods[] = {
     {NULL,         NULL}
 };
 
+#define set_zmq_const(s) lua_pushinteger(L,ZMQ_##s); lua_setfield(L, -2, #s);
+
 LUALIB_API int luaopen_zmq(lua_State *L)
 {
     // context metatable.
@@ -266,58 +268,34 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     luaL_register(L, "zmq", zmqlib);
 
     // flags.
-    lua_pushnumber(L, ZMQ_POLL);
-    lua_setfield(L, -2, "POLL");
-    lua_pushnumber(L, ZMQ_NOBLOCK);
-    lua_setfield(L, -2, "NOBLOCK");
-    lua_pushnumber(L, ZMQ_NOFLUSH);
-    lua_setfield(L, -2, "NOFLUSH");
+    set_zmq_const(POLL);
+    set_zmq_const(NOBLOCK);
+    set_zmq_const(NOFLUSH);
 
     // zmq.socket types.
-    lua_pushnumber(L, ZMQ_P2P);
-    lua_setfield(L, -2, "P2P");
-    lua_pushnumber(L, ZMQ_PUB);
-    lua_setfield(L, -2, "PUB");
-    lua_pushnumber(L, ZMQ_SUB);
-    lua_setfield(L, -2, "SUB");
-    lua_pushnumber(L, ZMQ_REQ);
-    lua_setfield(L, -2, "REQ");
-    lua_pushnumber(L, ZMQ_REP);
-    lua_setfield(L, -2, "REP");
-    lua_pushnumber(L, ZMQ_XREQ);
-    lua_setfield(L, -2, "XREQ");
-    lua_pushnumber(L, ZMQ_XREP);
-    lua_setfield(L, -2, "XREP");
-    lua_pushnumber(L, ZMQ_UPSTREAM);
-    lua_setfield(L, -2, "UPSTREAM");
-    lua_pushnumber(L, ZMQ_DOWNSTREAM);
-    lua_setfield(L, -2, "DOWNSTREAM");
+    set_zmq_const(P2P);
+    set_zmq_const(PUB);
+    set_zmq_const(SUB);
+    set_zmq_const(REQ);
+    set_zmq_const(REP);
+    set_zmq_const(XREQ);
+    set_zmq_const(XREP);
+    set_zmq_const(UPSTREAM);
+    set_zmq_const(DOWNSTREAM);
 
     // zmq.setsockopt options.
-    lua_pushnumber(L, ZMQ_HWM);
-    lua_setfield(L, -2, "HWM");
-    lua_pushnumber(L, ZMQ_LWM);
-    lua_setfield(L, -2, "LWM");
-    lua_pushnumber(L, ZMQ_SWAP);
-    lua_setfield(L, -2, "SWAP");
-    lua_pushnumber(L, ZMQ_AFFINITY);
-    lua_setfield(L, -2, "AFFINITY");
-    lua_pushnumber(L, ZMQ_IDENTITY);
-    lua_setfield(L, -2, "IDENTITY");
-    lua_pushnumber(L, ZMQ_SUBSCRIBE);
-    lua_setfield(L, -2, "SUBSCRIBE");
-    lua_pushnumber(L, ZMQ_UNSUBSCRIBE);
-    lua_setfield(L, -2, "UNSUBSCRIBE");
-    lua_pushnumber(L, ZMQ_RATE);
-    lua_setfield(L, -2, "RATE");
-    lua_pushnumber(L, ZMQ_RECOVERY_IVL);
-    lua_setfield(L, -2, "RECOVERY_IVL");
-    lua_pushnumber(L, ZMQ_MCAST_LOOP);
-    lua_setfield(L, -2, "MCAST_LOOP");
-    lua_pushnumber(L, ZMQ_SNDBUF);
-    lua_setfield(L, -2, "SNDBUF");
-    lua_pushnumber(L, ZMQ_RCVBUF);
-    lua_setfield(L, -2, "RCVBUF");
+    set_zmq_const(HWM);
+    set_zmq_const(LWM);
+    set_zmq_const(SWAP);
+    set_zmq_const(AFFINITY);
+    set_zmq_const(IDENTITY);
+    set_zmq_const(SUBSCRIBE);
+    set_zmq_const(UNSUBSCRIBE);
+    set_zmq_const(RATE);
+    set_zmq_const(RECOVERY_IVL);
+    set_zmq_const(MCAST_LOOP);
+    set_zmq_const(SNDBUF);
+    set_zmq_const(RCVBUF);
 
     return 1;
 }
