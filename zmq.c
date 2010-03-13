@@ -188,15 +188,6 @@ static int Lzmq_send(lua_State *L)
     return 1;
 }
 
-static int Lzmq_flush(lua_State *L)
-{
-    zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
-    if (zmq_flush(s->ptr) != 0) {
-        return luaL_error(L, zmq_strerror(zmq_errno()));
-    }
-    return 0;
-}
-
 static int Lzmq_recv(lua_State *L)
 {
     zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
@@ -242,7 +233,6 @@ static const luaL_reg sockmethods[] = {
     {"bind",       Lzmq_bind},
     {"connect",    Lzmq_connect},
     {"send",       Lzmq_send},
-    {"flush",      Lzmq_flush},
     {"recv",       Lzmq_recv},
     {NULL,         NULL}
 };
@@ -268,7 +258,6 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     // flags.
     set_zmq_const(POLL);
     set_zmq_const(NOBLOCK);
-    set_zmq_const(NOFLUSH);
 
     // zmq.socket types.
     set_zmq_const(P2P);

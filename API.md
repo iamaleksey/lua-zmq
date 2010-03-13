@@ -60,13 +60,6 @@ See [zmq_send(3)](http://api.zeromq.org/zmq_send.html).
 s:send(msg)  
 s:send(msg, flags)
 
-## flush
-
-Flushes unflushed messages to the socket.
-See [zmq_flush(3)](http://api.zeromq.org/zmq_flush.html).
-
-s:flush()
-
 ## recv
 
 Retrieves a message from the socket.
