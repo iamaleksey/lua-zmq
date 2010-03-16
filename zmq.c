@@ -35,6 +35,29 @@
 
 typedef struct { void *ptr; } zmq_ptr;
 
+static int Lzmq_version(lua_State *L)
+{
+    int major, minor, patch;
+
+    zmq_version(&major, &minor, &patch);
+
+    lua_createtable(L, 3, 0);
+
+    lua_pushinteger(L, 1);
+    lua_pushinteger(L, major);
+    lua_settable(L, -3);
+
+    lua_pushinteger(L, 2);
+    lua_pushinteger(L, minor);
+    lua_settable(L, -3);
+
+    lua_pushinteger(L, 3);
+    lua_pushinteger(L, patch);
+    lua_settable(L, -3);
+
+    return 1;
+}
+
 static int Lzmq_init(lua_State *L)
 {
     int app_threads = luaL_checkint(L, 1);
@@ -217,6 +240,7 @@ static int Lzmq_recv(lua_State *L)
 }
 
 static const luaL_reg zmqlib[] = {
+    {"version",    Lzmq_version},
     {"init",       Lzmq_init},
     {NULL,         NULL}
 };
