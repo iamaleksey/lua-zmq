@@ -5,7 +5,7 @@ ZMQ_CONSTANT_NAME in the C API turns into zmq.CONSTANT_NAME in Lua.
 ## version
 
 Reports 0MQ library version.
-See [zmq_version[3]](http://api.zeromq.org/zmq_version.html).
+See [zmq_version(3)](http://api.zeromq.org/zmq_version.html).
 
 zmq.version()
 
