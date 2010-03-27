@@ -282,6 +282,7 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     // flags.
     set_zmq_const(POLL);
     set_zmq_const(NOBLOCK);
+    set_zmq_const(MORE);
 
     // zmq.socket types.
     set_zmq_const(P2P);
