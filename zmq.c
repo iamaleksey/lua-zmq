@@ -158,6 +158,58 @@ static int Lzmq_setsockopt(lua_State *L)
     return 0;
 }
 
+static int Lzmq_getsockopt(lua_State *L)
+{
+    zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
+    int option = luaL_checkint(L, 2);
+
+    size_t optvallen;
+
+    int rc = 0;
+
+    switch (option) {
+    case ZMQ_HWM:
+    case ZMQ_LWM:
+    case ZMQ_SWAP:
+    case ZMQ_AFFINITY:
+        {
+            int64_t optval;
+            rc = zmq_getsockopt(s->ptr, option, (void *) &optval, &optvallen);
+            if (rc == 0) {
+                lua_pushinteger(L, (lua_Integer) optval);
+                return 1;
+            }
+        }
+        break;
+    /* case ZMQ_IDENTITY:
+     * case ZMQ_SUBSCRIBE:
+     * case ZMQ_UNSUBSCRIBE:
+     */
+    case ZMQ_RATE:
+    case ZMQ_RECOVERY_IVL:
+    case ZMQ_MCAST_LOOP:
+    case ZMQ_SNDBUF:
+    case ZMQ_RCVBUF:
+        {
+            uint64_t optval;
+            rc = zmq_getsockopt(s->ptr, option, (void *) &optval, &optvallen);
+            if (rc == 0) {
+                lua_pushinteger(L, (lua_Integer) optval);
+                return 1;
+            }
+        }
+        break;
+    default:
+        rc = -1;
+        errno = EINVAL;
+    }
+
+    if (rc != 0) {
+        return luaL_error(L, zmq_strerror(zmq_errno()));
+    }
+    return 0;
+}
+
 static int Lzmq_bind(lua_State *L)
 {
     zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
@@ -254,6 +306,7 @@ static const luaL_reg ctxmethods[] = {
 static const luaL_reg sockmethods[] = {
     {"close",      Lzmq_close},
     {"setsockopt", Lzmq_setsockopt},
+    {"getsockopt", Lzmq_getsockopt},
     {"bind",       Lzmq_bind},
     {"connect",    Lzmq_connect},
     {"send",       Lzmq_send},
@@ -265,13 +318,13 @@ static const luaL_reg sockmethods[] = {
 
 LUALIB_API int luaopen_zmq(lua_State *L)
 {
-    // context metatable.
+    /* context metatable. */
     luaL_newmetatable(L, MT_ZMQ_CONTEXT);
     lua_createtable(L, 0, sizeof(ctxmethods) / sizeof(luaL_reg) - 1);
     luaL_register(L, NULL, ctxmethods);
     lua_setfield(L, -2, "__index");
 
-    // socket metatable.
+    /* socket metatable. */
     luaL_newmetatable(L, MT_ZMQ_SOCKET);
     lua_createtable(L, 0, sizeof(sockmethods) / sizeof(luaL_reg) - 1);
     luaL_register(L, NULL, sockmethods);

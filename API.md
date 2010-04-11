@@ -45,6 +45,13 @@ See [zmq_setsockopt(3)](http://api.zeromq.org/zmq_setsockopt.html).
 
 s:setsockopt(option, optval)
 
+## getsockopt
+
+Gets a specified option of a ØMQ socket.
+See [zmq_getsockopt(3)](http://api.zeromq.org/zmq_getsockopt.html).
+
+s:getsockopt(option)
+
 ## bind
 
 Binds the socket to the specified address.
