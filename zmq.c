@@ -279,12 +279,6 @@ LUALIB_API int luaopen_zmq(lua_State *L)
 
     luaL_register(L, "zmq", zmqlib);
 
-    // flags.
-    set_zmq_const(POLL);
-    set_zmq_const(NOBLOCK);
-    set_zmq_const(MORE);
-
-    // zmq.socket types.
     set_zmq_const(P2P);
     set_zmq_const(PUB);
     set_zmq_const(SUB);
@@ -295,7 +289,6 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     set_zmq_const(UPSTREAM);
     set_zmq_const(DOWNSTREAM);
 
-    // zmq.setsockopt options.
     set_zmq_const(HWM);
     set_zmq_const(LWM);
     set_zmq_const(SWAP);
@@ -308,6 +301,10 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     set_zmq_const(MCAST_LOOP);
     set_zmq_const(SNDBUF);
     set_zmq_const(RCVBUF);
+    set_zmq_const(RCVMORE);
+
+    set_zmq_const(NOBLOCK);
+    set_zmq_const(SNDMORE);
 
     return 1;
 }
