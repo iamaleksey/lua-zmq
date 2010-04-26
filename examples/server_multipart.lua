@@ -27,7 +27,7 @@ s:bind("tcp://lo:5555")
 
 while true do
     local query = s:recv()
-    while s:getsockopt(zmq.RCVMORE) == 1 do
+    while s:getopt(zmq.RCVMORE) == 1 do
         query = query .. s:recv()
     end
     print(string.format("Received query: '%s'", query))

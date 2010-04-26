@@ -305,14 +305,14 @@ static const luaL_reg ctxmethods[] = {
 };
 
 static const luaL_reg sockmethods[] = {
-    {"close",      Lzmq_close},
-    {"setsockopt", Lzmq_setsockopt},
-    {"getsockopt", Lzmq_getsockopt},
-    {"bind",       Lzmq_bind},
-    {"connect",    Lzmq_connect},
-    {"send",       Lzmq_send},
-    {"recv",       Lzmq_recv},
-    {NULL,         NULL}
+    {"close",   Lzmq_close},
+    {"setopt",  Lzmq_setsockopt},
+    {"getopt",  Lzmq_getsockopt},
+    {"bind",    Lzmq_bind},
+    {"connect", Lzmq_connect},
+    {"send",    Lzmq_send},
+    {"recv",    Lzmq_recv},
+    {NULL,      NULL}
 };
 
 #define set_zmq_const(s) lua_pushinteger(L,ZMQ_##s); lua_setfield(L, -2, #s);

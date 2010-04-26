@@ -22,7 +22,7 @@ require("zmq")
 
 local ctx = zmq.init(1, 1, 0)
 local s = ctx:socket(zmq.SUB)
-s:setsockopt(zmq.SUBSCRIBE, "")
+s:setopt(zmq.SUBSCRIBE, "")
 s:connect("tcp://localhost:5555")
 while true do
     local msg = s:recv()

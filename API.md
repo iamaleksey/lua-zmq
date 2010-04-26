@@ -38,19 +38,19 @@ See [zmq_close(3)](http://api.zeromq.org/zmq_close.html).
 
 s:close()
 
-## setsockopt
+## setopt
 
 Sets a specified option on a ØMQ socket.
 See [zmq_setsockopt(3)](http://api.zeromq.org/zmq_setsockopt.html).
 
-s:setsockopt(option, optval)
+s:setopt(option, optval)
 
-## getsockopt
+## getopt
 
 Gets a specified option of a ØMQ socket.
 See [zmq_getsockopt(3)](http://api.zeromq.org/zmq_getsockopt.html).
 
-s:getsockopt(option)
+s:getopt(option)
 
 ## bind
 

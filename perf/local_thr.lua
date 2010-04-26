@@ -31,7 +31,7 @@ local message_count = tonumber(arg[3])
 
 local ctx = zmq.init(1, 1)
 local s = ctx:socket(zmq.SUB)
-s:setsockopt(zmq.SUBSCRIBE, "");
+s:setopt(zmq.SUBSCRIBE, "");
 s:bind(bind_to)
 
 local msg = s:recv()
