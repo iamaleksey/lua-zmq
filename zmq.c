@@ -333,7 +333,7 @@ LUALIB_API int luaopen_zmq(lua_State *L)
 
     luaL_register(L, "zmq", zmqlib);
 
-    set_zmq_const(P2P);
+    set_zmq_const(PAIR);
     set_zmq_const(PUB);
     set_zmq_const(SUB);
     set_zmq_const(REQ);
