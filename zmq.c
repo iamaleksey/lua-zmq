@@ -190,6 +190,7 @@ static int Lzmq_getsockopt(lua_State *L)
     case ZMQ_MCAST_LOOP:
     case ZMQ_SNDBUF:
     case ZMQ_RCVBUF:
+    case ZMQ_RCVMORE:
         {
             uint64_t optval;
             rc = zmq_getsockopt(s->ptr, option, (void *) &optval, &optvallen);
