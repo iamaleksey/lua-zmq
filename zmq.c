@@ -119,10 +119,10 @@ static int Lzmq_setsockopt(lua_State *L)
     int rc = 0;
 
     switch (option) {
-    case ZMQ_HWM:
-    case ZMQ_LWM:
     case ZMQ_SWAP:
-    case ZMQ_AFFINITY:
+    case ZMQ_RATE:
+    case ZMQ_RECOVERY_IVL:
+    case ZMQ_MCAST_LOOP:
         {
             int64_t optval = (int64_t) luaL_checklong(L, 3);
             rc = zmq_setsockopt(s->ptr, option, (void *) &optval, sizeof(int64_t));
@@ -137,9 +137,8 @@ static int Lzmq_setsockopt(lua_State *L)
             rc = zmq_setsockopt(s->ptr, option, (void *) optval, optvallen);
         }
         break;
-    case ZMQ_RATE:
-    case ZMQ_RECOVERY_IVL:
-    case ZMQ_MCAST_LOOP:
+    case ZMQ_HWM:
+    case ZMQ_AFFINITY:
     case ZMQ_SNDBUF:
     case ZMQ_RCVBUF:
         {
@@ -168,12 +167,14 @@ static int Lzmq_getsockopt(lua_State *L)
     int rc = 0;
 
     switch (option) {
-    case ZMQ_HWM:
-    case ZMQ_LWM:
     case ZMQ_SWAP:
-    case ZMQ_AFFINITY:
+    case ZMQ_RATE:
+    case ZMQ_RECOVERY_IVL:
+    case ZMQ_MCAST_LOOP:
+    case ZMQ_RCVMORE:
         {
             int64_t optval;
+            optvallen = sizeof(int64_t);
             rc = zmq_getsockopt(s->ptr, option, (void *) &optval, &optvallen);
             if (rc == 0) {
                 lua_pushinteger(L, (lua_Integer) optval);
@@ -181,18 +182,26 @@ static int Lzmq_getsockopt(lua_State *L)
             }
         }
         break;
-    /* case ZMQ_IDENTITY:
-     * case ZMQ_SUBSCRIBE:
-     * case ZMQ_UNSUBSCRIBE:
-     */
-    case ZMQ_RATE:
-    case ZMQ_RECOVERY_IVL:
-    case ZMQ_MCAST_LOOP:
+    case ZMQ_IDENTITY:
+        {
+            char id[256];
+            memset((void *)id, '\0', 256);
+            optvallen = 256;
+            rc = zmq_getsockopt(s->ptr, option, (void *)id, &optvallen);
+            id[255] = '\0';
+            if (rc == 0) {
+                lua_pushstring(L, id);
+                return 1;
+            }
+        }
+        break;
+    case ZMQ_HWM:
+    case ZMQ_AFFINITY:
     case ZMQ_SNDBUF:
     case ZMQ_RCVBUF:
-    case ZMQ_RCVMORE:
         {
             uint64_t optval;
+            optvallen = sizeof(uint64_t);
             rc = zmq_getsockopt(s->ptr, option, (void *) &optval, &optvallen);
             if (rc == 0) {
                 lua_pushinteger(L, (lua_Integer) optval);
@@ -344,7 +353,6 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     set_zmq_const(DOWNSTREAM);
 
     set_zmq_const(HWM);
-    set_zmq_const(LWM);
     set_zmq_const(SWAP);
     set_zmq_const(AFFINITY);
     set_zmq_const(IDENTITY);
