@@ -14,8 +14,7 @@ zmq.version()
 Initialises ØMQ context.
 See [zmq_init(3)](http://api.zeromq.org/zmq_init.html).
 
-zmq.init(app_threads, io_threads)  
-zmq.init(app_threads, io_threads, flags)
+zmq.init(io_threads)  
 
 ## term
 

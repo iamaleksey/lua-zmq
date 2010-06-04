@@ -60,13 +60,9 @@ static int Lzmq_version(lua_State *L)
 
 static int Lzmq_init(lua_State *L)
 {
-    int app_threads = luaL_checkint(L, 1);
-    int io_threads = luaL_checkint(L, 2);
-    int flags = luaL_optint(L, 3, 0);
-
+    int io_threads = luaL_checkint(L, 1);
     zmq_ptr *ctx = lua_newuserdata(L, sizeof(zmq_ptr));
-
-    ctx->ptr = zmq_init(app_threads, io_threads, flags);
+    ctx->ptr = zmq_init(io_threads);
 
     if (!ctx->ptr) {
         return luaL_error(L, zmq_strerror(zmq_errno()));

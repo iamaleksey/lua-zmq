@@ -29,7 +29,7 @@ local bind_to = arg[1]
 local message_size = tonumber(arg[2])
 local message_count = tonumber(arg[3])
 
-local ctx = zmq.init(1, 1)
+local ctx = zmq.init(1)
 local s = ctx:socket(zmq.SUB)
 s:setopt(zmq.SUBSCRIBE, "");
 s:bind(bind_to)

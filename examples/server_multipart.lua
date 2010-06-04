@@ -20,7 +20,7 @@
 
 require("zmq")
 
-local ctx = zmq.init(1, 1)
+local ctx = zmq.init(1)
 local s = ctx:socket(zmq.REP)
 
 s:bind("tcp://lo:5555")
