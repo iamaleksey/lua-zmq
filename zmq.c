@@ -304,6 +304,7 @@ static const luaL_reg zmqlib[] = {
 };
 
 static const luaL_reg ctxmethods[] = {
+    {"__gc",       Lzmq_term},
     {"term",       Lzmq_term}, 
     {"socket",     Lzmq_socket},
     {NULL,         NULL}
