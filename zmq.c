@@ -345,8 +345,14 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     set_zmq_const(REP);
     set_zmq_const(XREQ);
     set_zmq_const(XREP);
+
+#if defined(ZMQ_PULL) && defined(ZMQ_PUSH)
     set_zmq_const(PULL);
     set_zmq_const(PUSH);
+#else
+    set_zmq_const(UPSTREAM);
+    set_zmq_const(DOWNSTREAM);
+#endif
 
     set_zmq_const(HWM);
     set_zmq_const(SWAP);
