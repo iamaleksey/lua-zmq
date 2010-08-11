@@ -77,7 +77,12 @@ static int Lzmq_init(lua_State *L)
 static int Lzmq_term(lua_State *L)
 {
     zmq_ptr *ctx = luaL_checkudata(L, 1, MT_ZMQ_CONTEXT);
-    assert(zmq_term(ctx->ptr) == 0);
+
+    if(ctx->ptr != NULL) {
+        assert(zmq_term(ctx->ptr) == 0);
+        ctx->ptr = NULL;
+    }
+
     return 0;
 }
 
@@ -103,7 +108,12 @@ static int Lzmq_socket(lua_State *L)
 static int Lzmq_close(lua_State *L)
 {
     zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
-    assert(zmq_close(s->ptr) == 0);
+
+    if(s->ptr != NULL) {
+        assert(zmq_close(s->ptr) == 0);
+        s->ptr = NULL;
+    }
+
     return 0;
 }
 
@@ -311,6 +321,7 @@ static const luaL_reg ctxmethods[] = {
 };
 
 static const luaL_reg sockmethods[] = {
+    {"__gc",    Lzmq_close},
     {"close",   Lzmq_close},
     {"setopt",  Lzmq_setsockopt},
     {"getopt",  Lzmq_getsockopt},
