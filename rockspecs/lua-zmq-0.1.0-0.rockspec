@@ -1,7 +1,8 @@
 package = "lua-zmq"
 version = "0.1.0-0"
 source = {
-   url = "http://example.org/package.tar.gz"
+   url = "http://github.com/downloads/norman/lua-zmq/lua-zmq-0.1.0.tar.gz",
+   md5 = "64a6fdaef9992bee145d18c458da2afb"
 }
 description = {
    summary = "Lua bindings to zeromq2",
