@@ -58,6 +58,12 @@ static int Lzmq_version(lua_State *L)
     return 1;
 }
 
+#define zmq_return_error() \
+    const char *error = zmq_strerror(zmq_errno()); \
+    lua_pushnil(L); \
+    lua_pushlstring(L, error, strlen(error)); \
+    return 2
+
 static int Lzmq_init(lua_State *L)
 {
     int io_threads = luaL_checkint(L, 1);
@@ -65,7 +71,7 @@ static int Lzmq_init(lua_State *L)
     ctx->ptr = zmq_init(io_threads);
 
     if (!ctx->ptr) {
-        return luaL_error(L, zmq_strerror(zmq_errno()));
+        zmq_return_error();
     }
 
     luaL_getmetatable(L, MT_ZMQ_CONTEXT);
@@ -79,11 +85,16 @@ static int Lzmq_term(lua_State *L)
     zmq_ptr *ctx = luaL_checkudata(L, 1, MT_ZMQ_CONTEXT);
 
     if(ctx->ptr != NULL) {
-        assert(zmq_term(ctx->ptr) == 0);
-        ctx->ptr = NULL;
+        if(zmq_term(ctx->ptr) == 0) {
+            ctx->ptr = NULL;
+        } else {
+            zmq_return_error();
+        }
     }
 
-    return 0;
+    lua_pushboolean(L, 1);
+
+    return 1;
 }
 
 static int Lzmq_socket(lua_State *L)
@@ -96,7 +107,7 @@ static int Lzmq_socket(lua_State *L)
     s->ptr = zmq_socket(ctx->ptr, type);
 
     if (!s->ptr) {
-        return luaL_error(L, zmq_strerror(zmq_errno()));
+        zmq_return_error();
     }
 
     luaL_getmetatable(L, MT_ZMQ_SOCKET);
@@ -110,11 +121,16 @@ static int Lzmq_close(lua_State *L)
     zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
 
     if(s->ptr != NULL) {
-        assert(zmq_close(s->ptr) == 0);
-        s->ptr = NULL;
+        if(zmq_close(s->ptr) == 0) {
+            s->ptr = NULL;
+        } else {
+            zmq_return_error();
+        }
     }
 
-    return 0;
+    lua_pushboolean(L, 1);
+
+    return 1;
 }
 
 static int Lzmq_setsockopt(lua_State *L)
@@ -158,9 +174,12 @@ static int Lzmq_setsockopt(lua_State *L)
     }
 
     if (rc != 0) {
-        return luaL_error(L, zmq_strerror(zmq_errno()));
+        zmq_return_error();
     }
-    return 0;
+
+    lua_pushboolean(L, 1);
+
+    return 1;
 }
 
 static int Lzmq_getsockopt(lua_State *L)
@@ -221,9 +240,12 @@ static int Lzmq_getsockopt(lua_State *L)
     }
 
     if (rc != 0) {
-        return luaL_error(L, zmq_strerror(zmq_errno()));
+        zmq_return_error();
     }
-    return 0;
+
+    lua_pushboolean(L, 1);
+
+    return 1;
 }
 
 static int Lzmq_bind(lua_State *L)
@@ -232,10 +254,12 @@ static int Lzmq_bind(lua_State *L)
     const char *addr = luaL_checkstring(L, 2);
 
     if (zmq_bind(s->ptr, addr) != 0) {
-        return luaL_error(L, zmq_strerror(zmq_errno()));
+        zmq_return_error();
     }
 
-    return 0;
+    lua_pushboolean(L, 1);
+
+    return 1;
 }
 
 static int Lzmq_connect(lua_State *L)
@@ -244,10 +268,12 @@ static int Lzmq_connect(lua_State *L)
     const char *addr = luaL_checkstring(L, 2);
 
     if (zmq_connect(s->ptr, addr) != 0) {
-        return luaL_error(L, zmq_strerror(zmq_errno()));
+        zmq_return_error();
     }
 
-    return 0;
+    lua_pushboolean(L, 1);
+
+    return 1;
 }
 
 static int Lzmq_send(lua_State *L)
@@ -258,20 +284,19 @@ static int Lzmq_send(lua_State *L)
     int flags = luaL_optint(L, 3, 0);
 
     zmq_msg_t msg;
-    assert(zmq_msg_init_size(&msg, msg_size) == 0);
+    if(zmq_msg_init_size(&msg, msg_size) != 0) {
+        zmq_return_error();
+    }
     memcpy(zmq_msg_data(&msg), data, msg_size);
 
     int rc = zmq_send(s->ptr, &msg, flags);
 
-    assert(zmq_msg_close(&msg) == 0);
-
-    if (rc != 0 && zmq_errno() == EAGAIN) {
-        lua_pushboolean(L, 0);
-        return 1;
+    if(zmq_msg_close(&msg) != 0) {
+        zmq_return_error();
     }
 
     if (rc != 0) {
-        return luaL_error(L, zmq_strerror(zmq_errno()));
+        zmq_return_error();
     }
 
     lua_pushboolean(L, 1);
@@ -285,24 +310,23 @@ static int Lzmq_recv(lua_State *L)
     int flags = luaL_optint(L, 2, 0);
 
     zmq_msg_t msg;
-    assert(zmq_msg_init(&msg) == 0);
-
-    int rc = zmq_recv(s->ptr, &msg, flags);
-
-    if (rc != 0 && zmq_errno() == EAGAIN) {
-        assert(zmq_msg_close(&msg) == 0);
-        lua_pushnil(L);
-        return 1;
+    if(zmq_msg_init(&msg) != 0) {
+        zmq_return_error();
     }
 
-    if (rc != 0) {
-        assert(zmq_msg_close(&msg) == 0);
-        return luaL_error(L, zmq_strerror(zmq_errno()));
+    if(zmq_recv(s->ptr, &msg, flags) != 0) {
+        // Best we can do in this case is try to close and hope for the best.
+        zmq_msg_close(&msg);
+        zmq_return_error();
     }
 
     lua_pushlstring(L, zmq_msg_data(&msg), zmq_msg_size(&msg));
 
-    assert(zmq_msg_close(&msg) == 0);
+    if(zmq_msg_close(&msg) != 0) {
+        // Above string will be poped from the stack by the normalising code
+        // upon sucessful return.
+        zmq_return_error();
+    }
 
     return 1;
 }
