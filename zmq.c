@@ -67,11 +67,26 @@ static int Lzmq_version(lua_State *L)
     return 1;
 }
 
+static int Lzmq_push_error(lua_State *L)
+{
+    const char *error;
+    lua_pushnil(L);
+    switch(zmq_errno()) {
+    case EAGAIN:
+        lua_pushliteral(L, "timeout");
+        break;
+    case ETERM:
+        lua_pushliteral(L, "closed");
+        break;
+    default:
+        error = zmq_strerror(zmq_errno());
+        lua_pushlstring(L, error, strlen(error));
+        break;
+    }
+    return 2;
+}
 #define zmq_return_error() \
-    const char *error = zmq_strerror(zmq_errno()); \
-    lua_pushnil(L); \
-    lua_pushlstring(L, error, strlen(error)); \
-    return 2
+    return Lzmq_push_error(L)
 
 static int Lzmq_init(lua_State *L)
 {
