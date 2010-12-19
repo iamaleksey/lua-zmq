@@ -484,6 +484,11 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     set_zmq_const(LINGER);
     set_zmq_const(RECONNECT_IVL);
     set_zmq_const(BACKLOG);
+
+    /* POLL events */
+    set_zmq_const(POLLIN);
+    set_zmq_const(POLLOUT);
+    set_zmq_const(POLLERR);
 #endif
 
     /* Send/recv options. */
