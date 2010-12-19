@@ -30,6 +30,15 @@
 #include <string.h>
 #include <stdint.h>
 
+/* detect zmq version >= 2.1.0 */
+#define VERSION_2_1 0
+#if defined(ZMQ_VERSION)
+#if (ZMQ_VERSION >= ZMQ_MAKE_VERSION(2,1,0))
+#undef VERSION_2_1
+#define VERSION_2_1 1
+#endif
+#endif
+
 #define MT_ZMQ_CONTEXT "MT_ZMQ_CONTEXT"
 #define MT_ZMQ_SOCKET  "MT_ZMQ_SOCKET"
 
@@ -133,6 +142,15 @@ static int Lzmq_close(lua_State *L)
     return 1;
 }
 
+#if VERSION_2_1
+#ifdef _WIN32
+#include <winsock2.h>
+typedef SOCKET socket_t;
+#else
+typedef int socket_t;
+#endif
+#endif
+
 static int Lzmq_setsockopt(lua_State *L)
 {
     zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
@@ -141,6 +159,29 @@ static int Lzmq_setsockopt(lua_State *L)
     int rc = 0;
 
     switch (option) {
+#if VERSION_2_1
+    case ZMQ_FD:
+        {
+            socket_t optval = (socket_t) luaL_checklong(L, 3);
+            rc = zmq_setsockopt(s->ptr, option, (void *) &optval, sizeof(socket_t));
+        }
+        break;
+    case ZMQ_EVENTS:
+        {
+            int32_t optval = (int32_t) luaL_checklong(L, 3);
+            rc = zmq_setsockopt(s->ptr, option, (void *) &optval, sizeof(int32_t));
+        }
+        break;
+    case ZMQ_TYPE:
+    case ZMQ_LINGER:
+    case ZMQ_RECONNECT_IVL:
+    case ZMQ_BACKLOG:
+        {
+            int optval = (int) luaL_checklong(L, 3);
+            rc = zmq_setsockopt(s->ptr, option, (void *) &optval, sizeof(int));
+        }
+        break;
+#endif
     case ZMQ_SWAP:
     case ZMQ_RATE:
     case ZMQ_RECOVERY_IVL:
@@ -192,6 +233,44 @@ static int Lzmq_getsockopt(lua_State *L)
     int rc = 0;
 
     switch (option) {
+#if VERSION_2_1
+    case ZMQ_FD:
+        {
+            socket_t optval;
+            optvallen = sizeof(socket_t);
+            rc = zmq_getsockopt(s->ptr, option, (void *) &optval, &optvallen);
+            if (rc == 0) {
+                lua_pushinteger(L, (lua_Integer) optval);
+                return 1;
+            }
+        }
+        break;
+    case ZMQ_EVENTS:
+        {
+            int32_t optval;
+            optvallen = sizeof(int32_t);
+            rc = zmq_getsockopt(s->ptr, option, (void *) &optval, &optvallen);
+            if (rc == 0) {
+                lua_pushinteger(L, (lua_Integer) optval);
+                return 1;
+            }
+        }
+        break;
+    case ZMQ_TYPE:
+    case ZMQ_LINGER:
+    case ZMQ_RECONNECT_IVL:
+    case ZMQ_BACKLOG:
+        {
+            int optval;
+            optvallen = sizeof(int);
+            rc = zmq_getsockopt(s->ptr, option, (void *) &optval, &optvallen);
+            if (rc == 0) {
+                lua_pushinteger(L, (lua_Integer) optval);
+                return 1;
+            }
+        }
+        break;
+#endif
     case ZMQ_SWAP:
     case ZMQ_RATE:
     case ZMQ_RECOVERY_IVL:
@@ -374,6 +453,7 @@ LUALIB_API int luaopen_zmq(lua_State *L)
 
     luaL_register(L, "zmq", zmqlib);
 
+    /* Socket types. */
     set_zmq_const(PAIR);
     set_zmq_const(PUB);
     set_zmq_const(SUB);
@@ -384,6 +464,7 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     set_zmq_const(PULL);
     set_zmq_const(PUSH);
 
+    /* Socket options. */
     set_zmq_const(HWM);
     set_zmq_const(SWAP);
     set_zmq_const(AFFINITY);
@@ -396,7 +477,16 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     set_zmq_const(SNDBUF);
     set_zmq_const(RCVBUF);
     set_zmq_const(RCVMORE);
+#if VERSION_2_1
+    set_zmq_const(FD);
+    set_zmq_const(EVENTS);
+    set_zmq_const(TYPE);
+    set_zmq_const(LINGER);
+    set_zmq_const(RECONNECT_IVL);
+    set_zmq_const(BACKLOG);
+#endif
 
+    /* Send/recv options. */
     set_zmq_const(NOBLOCK);
     set_zmq_const(SNDMORE);
 
