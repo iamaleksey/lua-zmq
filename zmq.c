@@ -27,6 +27,7 @@
 
 #include <zmq.h>
 #include <assert.h>
+#include <errno.h>
 #include <string.h>
 #include <stdint.h>
 
@@ -353,13 +354,45 @@ static int Lzmq_recv_raw(lua_State *L)
     zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
     zmq_msg_t *msg = luaL_checkudata(L, 2, MT_ZMQ_MESSAGE);
     int flags = luaL_optint(L, 3, 0);
+    long timeout = luaL_optlong(L, 4, 0);
+    int rc;
 
-    if (zmq_recv(s->ptr, msg, flags) != 0) {
+    if (timeout != 0) {
+        // If the user asked for a timeout, do a non-blocking read.
+        rc = zmq_recv(s->ptr, msg, flags | ZMQ_NOBLOCK);
+
+        if ((rc != 0) && (errno == EAGAIN)) {
+            // No message immediately available.  Use zmq_poll to wait
+            // at most timeout microseconds.
+
+            zmq_pollitem_t pollitem;
+            pollitem.socket = s->ptr;
+            pollitem.events = ZMQ_POLLIN;
+
+            rc = zmq_poll(&pollitem, 1, timeout);
+            if (rc == 0) {
+                // Timeout expire.
+                lua_pushnil(L);
+                lua_pushliteral(L, "timeout");
+                return 2;
+            }
+
+            if (rc > 0) {
+                // Poll says something is available; try the read again.
+                rc = zmq_recv(s->ptr, msg, flags);
+            }
+        }
+    } else {
+        rc = zmq_recv(s->ptr, msg, flags);
+    }
+
+    if (rc != 0) {
         // Best we can do in this case is try to close and hope for the best.
-        zmq_msg_close(&msg);
+        zmq_msg_close(msg);
         zmq_return_error();
     }
 
+    lua_pushboolean(L, 1);
     return 1;
 }
 
