@@ -27,6 +27,7 @@
 
 #include <zmq.h>
 #include <assert.h>
+#include <errno.h>
 #include <string.h>
 #include <stdint.h>
 
@@ -40,6 +41,7 @@
 #endif
 
 #define MT_ZMQ_CONTEXT "MT_ZMQ_CONTEXT"
+#define MT_ZMQ_MESSAGE "MT_ZMQ_MESSAGE"
 #define MT_ZMQ_SOCKET  "MT_ZMQ_SOCKET"
 
 typedef struct {
@@ -435,6 +437,22 @@ static int Lzmq_send(lua_State *L)
     return 1;
 }
 
+static int Lzmq_send_raw(lua_State *L)
+{
+    zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
+    zmq_msg_t *msg = luaL_checkudata(L, 2, MT_ZMQ_MESSAGE);
+    int flags = luaL_optint(L, 3, 0);
+
+    int rc = zmq_send(s->ptr, msg, flags);
+
+    if (rc != 0) {
+        zmq_return_error();
+    }
+
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
 static int Lzmq_recv(lua_State *L)
 {
     zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
@@ -462,9 +480,80 @@ static int Lzmq_recv(lua_State *L)
     return 1;
 }
 
+static int Lzmq_recv_raw(lua_State *L)
+{
+    zmq_ptr *s = luaL_checkudata(L, 1, MT_ZMQ_SOCKET);
+    zmq_msg_t *msg = luaL_checkudata(L, 2, MT_ZMQ_MESSAGE);
+    int flags = luaL_optint(L, 3, 0);
+    long timeout = luaL_optlong(L, 4, 0);
+    int rc;
+
+    if (timeout != 0) {
+        // If the user asked for a timeout, do a non-blocking read.
+        rc = zmq_recv(s->ptr, msg, flags | ZMQ_NOBLOCK);
+
+        if ((rc != 0) && (errno == EAGAIN)) {
+            // No message immediately available.  Use zmq_poll to wait
+            // at most timeout microseconds.
+
+            zmq_pollitem_t pollitem;
+            pollitem.socket = s->ptr;
+            pollitem.events = ZMQ_POLLIN;
+
+            rc = zmq_poll(&pollitem, 1, timeout);
+            if (rc == 0) {
+                // Timeout expire.
+                lua_pushnil(L);
+                lua_pushliteral(L, "timeout");
+                return 2;
+            }
+
+            if (rc > 0) {
+                // Poll says something is available; try the read again.
+                rc = zmq_recv(s->ptr, msg, flags);
+            }
+        }
+    } else {
+        rc = zmq_recv(s->ptr, msg, flags);
+    }
+
+    if (rc != 0) {
+        // Best we can do in this case is try to close and hope for the best.
+        zmq_msg_close(msg);
+        zmq_return_error();
+    }
+
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
+static int Lzmq_Message(lua_State *L)
+{
+    zmq_msg_t *msg = lua_newuserdata(L, sizeof(zmq_msg_t));
+    zmq_msg_init(msg);
+    luaL_getmetatable(L, MT_ZMQ_MESSAGE);
+    lua_setmetatable(L, -2);
+    return 1;
+}
+
+static int Lzmq_msg_data(lua_State *L)
+{
+    zmq_msg_t *msg = luaL_checkudata(L, 1, MT_ZMQ_MESSAGE);
+    lua_pushlstring(L, zmq_msg_data(msg), zmq_msg_size(msg));
+    return 1;
+}
+
+static int Lzmq_msg_gc(lua_State *L)
+{
+    zmq_msg_t *msg = luaL_checkudata(L, 1, MT_ZMQ_MESSAGE);
+    zmq_msg_close(msg);
+    return 0;
+}
+
 static const luaL_reg zmqlib[] = {
     {"version",    Lzmq_version},
     {"init",       Lzmq_init},
+    {"Message",    Lzmq_Message},
     {NULL,         NULL}
 };
 
@@ -484,8 +573,16 @@ static const luaL_reg sockmethods[] = {
     {"bind",    Lzmq_bind},
     {"connect", Lzmq_connect},
     {"send",    Lzmq_send},
+    {"send_raw", Lzmq_send_raw},
     {"recv",    Lzmq_recv},
+    {"recv_raw", Lzmq_recv_raw},
     {NULL,      NULL}
+};
+
+static const luaL_reg msgmethods[] = {
+    {"__gc",       Lzmq_msg_gc},
+    {"data",       Lzmq_msg_data},
+    {NULL,         NULL}
 };
 
 #define set_zmq_const(s) lua_pushinteger(L,ZMQ_##s); lua_setfield(L, -2, #s);
@@ -502,6 +599,12 @@ LUALIB_API int luaopen_zmq(lua_State *L)
     luaL_newmetatable(L, MT_ZMQ_SOCKET);
     lua_createtable(L, 0, sizeof(sockmethods) / sizeof(luaL_reg) - 1);
     luaL_register(L, NULL, sockmethods);
+    lua_setfield(L, -2, "__index");
+
+    /* message metatable. */
+    luaL_newmetatable(L, MT_ZMQ_MESSAGE);
+    lua_createtable(L, 0, sizeof(msgmethods) / sizeof(luaL_reg) - 1);
+    luaL_register(L, NULL, msgmethods);
     lua_setfield(L, -2, "__index");
 
     luaL_register(L, "zmq", zmqlib);
